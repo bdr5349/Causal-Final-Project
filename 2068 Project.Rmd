@@ -1,0 +1,91 @@
+---
+title: "2068 Project"
+author: "Tucker Harvey"
+date: "11/18/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(sem)
+library(ivreg)
+```
+
+
+```{r}
+twins.y<-read.csv("twin_pairs_Y_3years_samesex.csv")
+twins.x<-read.csv("twin_pairs_X_3years_samesex.csv")
+twins.t<-read.csv("twin_pairs_T_3years_samesex.csv")
+```
+
+```{r}
+twins <-left_join(twins.y,twins.x, by="X")
+twins <-left_join(twins,twins.t, by="X")
+twins
+```
+
+
+```{r}
+twins %>% filter(mort_0==1, mort_1==1)
+```
+
+
+
+## Data cleaning for IV
+
+### Adding a difference in birthweight column
+
+```{r}
+twins <- mutate(.data = twins, "dbirwt_diff" = dbirwt_1 - dbirwt_0)
+twins
+```
+
+### Difference in mortality
+
+```{r}
+twins <- mutate(.data = twins, "mort_diff" = abs(mort_0 - mort_1))
+twins
+```
+
+
+```{r}
+table(twins$mort_diff)
+```
+
+
+
+
+```{r}
+twins_smoke <- twins %>% filter(!is.na(tobacco)) 
+twins_smoke
+```
+
+
+
+
+```{r}
+table(twins_smoke$mort_diff)
+```
+
+
+```{r}
+m_iv <- ivreg(mort_diff ~ dbirwt_diff + alcohol + anemia + cardiac + diabetes + eclamp + preterm|
+  tobacco + alcohol + anemia + cardiac + diabetes + eclamp + preterm,
+  data = twins_smoke)
+summary(m_iv)
+```
+
+
+
+
+
+
+
+
+
+
+
